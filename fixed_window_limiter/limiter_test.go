@@ -119,3 +119,58 @@ func BenchmarkLimiterAllowlogs(b *testing.B) {
 
 	b.Logf("Allowed: %d, Denied: %d", allowedCount, deniedCount)
 }
+
+// -------------------------------------------------------------
+
+// go test -v -run ^TestLimiterWithBurstLogging$
+func TestLimiterWithBurstLogging(t *testing.T) {
+	limiter := NewFixedWindowWithBurstRateLimiter(3, 5, time.Second) // rate=3, burst=5
+
+	for i := 1; i <= 7; i++ {
+		allowed := limiter.AllowBurst()
+		if allowed {
+			t.Logf("Request %d: allowed ✅", i)
+		} else {
+			t.Logf("Request %d: denied ❌", i)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+// go test -v -run ^TestLimiterWithBurstConcurrency$
+func TestLimiterWithBurstConcurrency(t *testing.T) {
+	limiter := NewFixedWindowWithBurstRateLimiter(3, 5, time.Second)
+	var wg sync.WaitGroup
+	totalGoroutines := 10
+
+	for i := 0; i < totalGoroutines; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			if limiter.AllowBurst() {
+				t.Logf("Goroutine %d: allowed ✅", id)
+			} else {
+				t.Logf("Goroutine %d: denied ❌", id)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+// go test -v -run ^BenchmarkLimiterAllowWithBurst$
+func BenchmarkLimiterAllowWithBurst(b *testing.B) {
+	limiter := NewFixedWindowWithBurstRateLimiter(3, 5, time.Second)
+
+	var allowedCount, deniedCount int
+
+	for i := 0; i < b.N; i++ {
+		if limiter.AllowBurst() {
+			allowedCount++
+		} else {
+			deniedCount++
+		}
+	}
+
+	b.Logf("Allowed: %d, Denied: %d", allowedCount, deniedCount)
+}

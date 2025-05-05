@@ -54,3 +54,56 @@ func (f *FixedWindowRateLimiter) Allow() bool {
 
 	return false
 }
+
+// ----------------------------------------------------------------------
+
+// FIXED WINDOW WITH BURST
+
+// Rate     int          allowed requests per window
+// Burst    int           max burst capacity
+// Interval time.Duration  time window
+// Mu       sync.Mutex
+// Requests []time.Time    tracked request times
+type FixedWindowWithBurstRateLimiter struct {
+	Rate     int          
+	Burst    int           
+	Interval time.Duration 
+	Mu       sync.Mutex
+	Requests []time.Time 
+}
+
+
+func NewFixedWindowWithBurstRateLimiter(rate, burst int, interval time.Duration) *FixedWindowWithBurstRateLimiter {
+	return &FixedWindowWithBurstRateLimiter{
+		Rate:     rate,
+		Burst:    burst,
+		Interval: interval,
+		Requests: make([]time.Time, 0),
+	}
+}
+
+
+func (f *FixedWindowWithBurstRateLimiter) AllowBurst() bool {
+	f.Mu.Lock()
+	defer f.Mu.Unlock()
+
+	now := time.Now()
+	limitTime := now.Add(-f.Interval)
+
+	i := 0
+	for _, t := range f.Requests {
+		if t.After(limitTime) {
+			break
+		}
+		i++
+	}
+	f.Requests = f.Requests[i:]
+
+	
+	if len(f.Requests) < f.Burst {
+		f.Requests = append(f.Requests, now)
+		return true
+	}
+
+	return false
+}
