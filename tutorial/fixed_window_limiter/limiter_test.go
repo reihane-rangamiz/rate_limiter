@@ -1,4 +1,4 @@
-package ratelimiter
+package fixedwindowlimiter
 
 import (
 	"sync"

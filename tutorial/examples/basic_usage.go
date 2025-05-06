@@ -2,7 +2,7 @@ package examples
 
 import (
 	"fmt"
-	ratelimiter "rate_limiter/fixed_window_limiter"
+	ratelimiter "rate_limiter/tutorial/fixed_window_limiter"
 	"sync"
 	"time"
 )
