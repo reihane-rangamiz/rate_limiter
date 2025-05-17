@@ -1,21 +1,21 @@
 package test
 
 import (
-	"rate_limiter/ratelimiter"
+	"rate_limiter/internal"
 	"testing"
 	"time"
 )
 
 func TestRateLimiter(t *testing.T) {
 	// Create a config that limits to 3 requests per second
-	config := &ratelimiter.RateLimiterConfig{
+	config := &internal.RateLimiterConfig{
 		Rate:            3,
 		Interval:        time.Minute,
 		IncludedUserIDs: []string{"user123"},
 		ExcludedUserIPs: []string{"127.0.0.1"},
 	}
 
-	ratelimiter.NewRateLimiter(config)
+	internal.NewRateLimiter(config)
 
 
 	if !config.Allow("127.0.0.1") {
